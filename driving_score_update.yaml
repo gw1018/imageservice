@@ -1,0 +1,218 @@
+host: api-dev.arity.com
+swagger: '2.0'
+info:
+  title: Driving Score APIs
+  description: A group of APIs that provide a driving score based on a set of driving data.
+  version: 1.0.0
+schemes:
+  - http
+basePath: /v1
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /drivingData:
+    post:
+      summary: Ingest driving data
+      description: Ingest and process driving data for a given suitcaseId
+      parameters:
+        - name: Apikey
+          in: header
+          required: true
+          type: string
+          description: 'Format "Apikey: <<apikey>>"'
+        - name: suitcaseId
+          in: header
+          required: true
+          type: string
+          description: 'Format "suitcaseId: <<suitcaseId>>"'
+        - name: X-Device-Info
+          in: header
+          required: false
+          type: string
+          description: 'Format "make=Apple; model=iphone6; OSversion=iOS8.1;"'
+        - name: X-App-Info
+          in: header
+          required: false
+          type: string
+          description: 'Format "app=StreetWise; version=1.1; sdkVersion=3.1"'
+        - name: body
+          in: body
+          description: Driving data details
+          schema:
+            $ref: '#/definitions/drivingData'
+      tags:
+        - Driving data
+      responses:
+        '202':
+          description: Driving data sent successfully.
+        '400':
+          description: Malformed or invalid request was received
+          schema:
+            $ref: '#/definitions/errors'
+        '401':
+          description: Unauthorized, user does not have access to an api or an api’s method. 
+          schema:
+            $ref: '#/definitions/errors'
+        '403':
+          description: Forbidden, invalid suitcaseId supplied
+          schema:
+            $ref: '#/definitions/errors'
+        '404':
+          description: Specified request is valid but the item is not found. 
+          schema:
+            $ref: '#/definitions/errors'
+        '422':
+          description: Unprocessable driving data
+          schema:
+            $ref: '#/definitions/errors'
+        '503':
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/errors'
+  /drivingScore/{suitcaseId}:
+    get:
+      summary: Get driving score
+      description: Get the driving score for the provided suitcaseId.
+      parameters:
+        - name: Apikey
+          in: header
+          required: true
+          type: string
+          description: 'Format "Apikey: <<apikey>>"'
+        - name: suitcaseId
+          in: path
+          required: true
+          type: string
+        - name: programCode
+          in: query
+          required: true
+          type: string
+      tags:
+        - Driving score
+      responses:
+        '200':
+          description: Driving score retrieved
+          schema:
+            $ref: '#/definitions/successModel'
+        '400':
+          description: Malformed or invalid request was received
+          schema:
+            $ref: '#/definitions/errors'
+        '401':
+          description: Unauthorized, user does not have access to an api or an api’s method. 
+          schema:
+            $ref: '#/definitions/errors'
+        '403':
+          description: Forbidden, invalid suitcaseId supplied
+          schema:
+            $ref: '#/definitions/errors'
+        '404':
+          description: Specified request is valid but the item is not found. 
+          schema:
+            $ref: '#/definitions/errors'
+        '503':
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/errors'
+definitions:
+  drivingData:
+    type: object
+    properties:
+        vehicleId:
+          type: string
+        dataSource:
+          type: object
+          properties:
+            manufacturer:
+              type: string
+            version:
+              type: string
+        trips:      
+          type: array
+          items:
+            properties:
+              tripId:
+                type: string
+              tripEvents:  
+                type: array
+                items:
+                  properties:
+                    datetime_utc:
+                      type: string
+                    local_timezone_utc_offset:
+                      type: string
+                    event:
+                      type: string
+                    distance_since_trip_start:
+                      type: number
+                      format: double
+                    vehicle_speed:
+                      type: number
+                      format: double
+                    vehicle_deceleration:
+                      type: number
+                      format: double 
+                    latitude:
+                      type: number
+                      format: double
+                    longitude:
+                      type: number
+                      format: double
+                    heading:
+                      type: number
+                      format: double
+                    hdop:
+                      type: number
+                      format: double
+  errors:
+    type: array
+    items:
+      properties:
+        code:
+          type: string
+        userMessage:
+          type: string
+        systemMessage:
+          type: string
+ 
+  successModel:
+    type: object
+    properties:
+      status:
+        type: object
+        properties:
+            code:
+              type: string
+            version:
+              type: string
+            requestId:
+              type: string
+      data:
+        type: object
+        properties:
+            programCode:
+              type: string
+            eligibleTrips:
+              type: integer
+              format: int32
+              minimum: 0
+            scores:
+              type: array
+              items:
+                  properties:
+                    suitcaseId:
+                      type: string
+                    startDate:
+                      type: string
+                    endDate:
+                      type: string
+                    trips:
+                      type: integer
+                      format: int32
+                      minimum: 0
+                    score:
+                      type: integer
+                      format: int32
+                      minimum: 0 
